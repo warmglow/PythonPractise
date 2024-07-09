@@ -11,5 +11,5 @@ X_pca = pca.fit_transform(X)
 plt.scatter(X[:, 0], X[:, 1], alpha=0.5)
 plt.scatter(X_pca, np.zeros_like(X_pca), alpha=0.5, color='red')
 plt.title('PCA Result')
-plt.show()
+plt.show() # this is a reversion
 
