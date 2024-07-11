@@ -97,5 +97,26 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
         right = rightness(output, target)
-        train_rights.append(right
-                            )
+        train_rights.append(right)
+
+        if batch_idx % 100 == 0:
+            net.eval()
+            val_rights = []
+
+            for (data, target) in validation_loader:
+                data, target = data.clone().requires_grad_(True), target.clone.detach()
+                output = net(data)
+                right = rightness(output, target)
+                val_rights.append(right)
+
+            train_r = (sum([tup(0) for tup in train_rights]), sum([tup(1)] for tup in train_rights))
+            val_r = (sum([tup(0)] for tup in val_rights), sum([tup(1)] for tup in val_rights))
+
+            print('训练周期：{} [{}/{} ({:.0f}%)]\t, Loss：{:.6f}\t，训练准确率：{:.2f}%\t，校验准确率：{:.2f}%'.format(
+                epoch, batch_idx * len(data), len(train_loader.dataset),
+                100. * batch_idx / len(train_loader), loss.data,
+                100. * train_r[0] / train_r[1],
+                100. * val_r[0] / val_r[1]))
+            record.append((100 - 100. * train_r[0] / train_r[1], 100 - 100. * val_r[0] / val_r[1]))
+            weights.append([net.conv1.weight.data.clone(), net.conv1.bias.data.clone(),
+                            net.conv2.weight.data.clone(), net.conv2.bias.data.clone()])
