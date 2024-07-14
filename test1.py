@@ -11,37 +11,9 @@ import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
 
-image_size = 28
-num_classes = 10
-num_epochs = 20
-batch_size = 64
-
-train_dataset = dsets.MNIST(root='./data', train=True, transform=transforms.ToTensor(), download=True)
-test_dataset = dsets.MNIST(root='./data', train=False, transform=transforms.ToTensor())
-
-train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
-
-indices = range(len(test_dataset))
-indices_val = indices[:5000]
-indices_test = indices[5000:]
-
-sampler_val = torch.utils.data.sampler.SubsetRandomSampler(indices_val)
-sampler_test = torch.utils.data.sampler.SubsetRandomSampler(indices_test)
-
-validation_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size,
-                                                shuffle=False, sampler=sampler_val)
-
-test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size,
-                                          shuffle=False, sampler=sampler_test)
-
-# idx = 99
-# muteimg = train_dataset[idx][0].numpy()
-#
-# plt.imshow(muteimg[0,...])
-# plt.show()
-# print('Label is ', train_dataset[idx][1])
-
 depth = [4, 8]
+
+
 class ConvNet(nn.Module):
     def __init__(self):
         super(ConvNet, self).__init__()
@@ -52,7 +24,7 @@ class ConvNet(nn.Module):
         self.fc1 = nn.Linear(image_size // 4 * image_size // 4 * depth[1], 512)
         self.fc2 = nn.Linear(512, num_classes)
 
-    def foward(self, x):
+    def forward(self, x):
         x = self.conv1(x)
         x = F.relu(x)
         x = self.pool(x)
@@ -76,6 +48,39 @@ class ConvNet(nn.Module):
 def rightness(output, target):
     preds = output.data.max(dim=1, keepdim=True)[1]
     return preds.eq(target.data.view_as(preds)).cpu().sum(target)
+
+
+image_size = 28     # 图像单边像元尺寸
+num_classes = 10    # 图像分类的标签种类
+num_epochs = 20     # 训练循环数
+batch_size = 64     # 一个batch样本数量
+
+# root：存储图像数据的目录，train：True是训练数据，False是测试数据，transform：数据预处理，download：下载允许
+train_dataset = dsets.MNIST(root='./data', train=True, transform=transforms.ToTensor(), download=True)
+test_dataset = dsets.MNIST(root='./data', train=False, transform=transforms.ToTensor())
+
+# Dataloader通过调用dataset的__getitem__获取单个数据，用于生成data, target
+train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+
+indices = range(len(test_dataset))  # range函数得到的是一个名为range的类，属于iterable类型
+indices_val = indices[:5000]        # 截取test前5000个样本作为验证集
+indices_test = indices[5000:]       # 截取test后5000个样本作为测试集
+
+sampler_val = torch.utils.data.sampler.SubsetRandomSampler(indices_val)
+sampler_test = torch.utils.data.sampler.SubsetRandomSampler(indices_test)
+
+validation_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size,
+                                                shuffle=False, sampler=sampler_val)
+
+test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size,
+                                          shuffle=False, sampler=sampler_test)
+
+# idx = 99
+# muteimg = train_dataset[idx][0].numpy()
+#
+# plt.imshow(muteimg[0,...])
+# plt.show()
+# print('Label is ', train_dataset[idx][1])
 
 net = ConvNet()
 
@@ -120,3 +125,6 @@ for epoch in range(num_epochs):
             record.append((100 - 100. * train_r[0] / train_r[1], 100 - 100. * val_r[0] / val_r[1]))
             weights.append([net.conv1.weight.data.clone(), net.conv1.bias.data.clone(),
                             net.conv2.weight.data.clone(), net.conv2.bias.data.clone()])
+
+
+
