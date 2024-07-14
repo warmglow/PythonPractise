@@ -1,3 +1,4 @@
+
 import torch
 
 x = torch.tensor([1., 1.], requires_grad=True)
@@ -24,3 +25,4 @@ loss = y.sum()
 optim.zero_grad()
 loss.backward()  # 计算梯度grad, 更新 x*grad
 print("进行optimizer.zero_grad(), 参数的梯度为: ", x.grad)
+
