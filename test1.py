@@ -47,7 +47,7 @@ class ConvNet(nn.Module):
 
 def rightness(output, target):
     preds = output.data.max(dim=1, keepdim=True)[1]
-    return preds.eq(target.data.view_as(preds)).cpu().sum(target)
+    return preds.eq(target.data.view_as(preds)).cpu(), len(target)
 
 
 image_size = 28     # 图像单边像元尺寸
@@ -109,13 +109,13 @@ for epoch in range(num_epochs):
             val_rights = []
 
             for (data, target) in validation_loader:
-                data, target = data.clone().requires_grad_(True), target.clone.detach()
+                data, target = data.clone().requires_grad_(True), target.clone().detach()
                 output = net(data)
                 right = rightness(output, target)
                 val_rights.append(right)
 
-            train_r = (sum([tup(0) for tup in train_rights]), sum([tup(1)] for tup in train_rights))
-            val_r = (sum([tup(0)] for tup in val_rights), sum([tup(1)] for tup in val_rights))
+            train_r = (sum(train_rights[0][0]).item(), train_rights[0][1])
+            val_r = (sum(sum(tup[0]) for tup in val_rights).item(), sum(tup[1] for tup in val_rights))
 
             print('训练周期：{} [{}/{} ({:.0f}%)]\t, Loss：{:.6f}\t，训练准确率：{:.2f}%\t，校验准确率：{:.2f}%'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
