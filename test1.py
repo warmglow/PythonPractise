@@ -126,7 +126,7 @@ for epoch in range(num_epochs):
             weights.append([net.conv1.weight.data.clone(), net.conv1.bias.data.clone(),
                             net.conv2.weight.data.clone(), net.conv2.bias.data.clone()])
 
-            ## c'est ici
+            ## c'est ici.
 
 
 
