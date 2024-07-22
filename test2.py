@@ -14,6 +14,12 @@ import copy
 import os
 
 
+def rightness(predictions, labels):
+    """计算预测错误率的函数，其中predictions是模型给出的一组预测结果，batch_size行10列的矩阵，labels是数据之中的正确答案"""
+    pred = torch.max(predictions.data, 1)[1] # 对于任意一行（一个样本）的输出值的第1个维度，求最大，得到每一行的最大元素的下标
+    rights = pred.eq(labels.data.view_as(pred)).sum() #将下标与labels中包含的类别进行比较，并累计得到比较正确的数量
+    return rights, torch.tensor(len(labels)).cuda()  #返回正确的数量和这一次一共比较了多少元素
+
 data_dir = 'data/data'
 image_size = 224
 
@@ -21,7 +27,7 @@ image_size = 224
 # Normalize利用经验值：均值[0.485, 0.456, 0.406], 标准差[0.229, 0.224, 0.225]将图像各通道的数值转换至[-1, 1]的范围内
 train_dataset = datasets.ImageFolder(os.path.join(data_dir, 'train'),
                                      transforms.Compose([
-                                         transforms.RandomCrop(image_size),
+                                         transforms.RandomResizedCrop(image_size),
                                          transforms.RandomHorizontalFlip(),
                                          transforms.ToTensor(),
                                          transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -35,8 +41,8 @@ val_dataset = datasets.ImageFolder(os.path.join(data_dir, 'val'),
                                        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                                    ]))
 
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4, shuffle=True)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=4, shuffle=True)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=20, shuffle=True)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=20, shuffle=True)
 
 num_classes = len(train_dataset.classes)
 
@@ -54,6 +60,8 @@ for param in net.parameters():
 num_ftrs = net.fc.in_features
 net.fc = nn.Linear(num_ftrs, 2)
 net.fc = net.fc.cuda() if use_cuda else net.fc
+for param in net.fc.parameters():
+    param.requires_grad = True
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
 
@@ -74,8 +82,11 @@ for epoch in range(num_epochs):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        # right = rightness(output, target)
-        # train_rights.append(right)
+        right = rightness(output, target)
+        train_rights.append(right)
         loss = loss.cpu() if use_cuda else loss
         train_losses.append(loss.data.numpy())
 
+    train_r = (sum([tup[0] for tup in train_rights]).cpu(), sum([tup[1] for tup in train_rights]).cpu())
+    print('{}   {}'.format(train_r[0], train_r[1]))
+pass
